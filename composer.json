@@ -1,0 +1,35 @@
+{
+    "name": "bonza/fdd",
+    "description": "支持PHP7.2语法，法大大接口类库",
+    "type": "library",
+    "keywords": [
+        "fadada",
+        "fadada-sdk",
+        "sdk"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "bonza",
+            "email": "y.shi.guo@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.2.0",
+        "ext-mbstring": "*",
+        "ext-curl": "*",
+        "ext-openssl": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "bonza\\fdd\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.3-dev"
+        }
+    }
+}
