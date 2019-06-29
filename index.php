@@ -11,7 +11,9 @@ namespace bonza\fdd;
 require 'vendor/autoload.php';
 $options =[
     'appId' => '402163',
-    'appSecret'=>'IXWMOF0WghaoHRqdqD9ZYcxI'
+    'appSecret'=>'IXWMOF0WghaoHRqdqD9ZYcxI',
+    'baseUrl' => 'https://testapi.fadada.com:8443/api/',
+    'version'=>'2.0'
 ];
 $fdd = new Fdd((new Curl()),$options);
 

@@ -8,12 +8,13 @@
 
 namespace bonza\fdd;
 
-use bonza\fdd\Encrypt;
-
+//use bonza\fdd\Encrypt;
+use bonza\fdd\exception\InvalidArgumentException;
 
 class Fdd
 {
     use FddApi2;
+
     /**
      * @var string
      */
@@ -51,12 +52,21 @@ class Fdd
      *      'baseUrl'=>'',接口地址
      * ]
      */
-    public function __construct(Curl $curl,$options = [])
+    public function __construct(Curl $curl, $options = [])
     {
         $this->timestamp = date("YmdHis");
-        $this->appId = $options['appId'];
-        $this->appSecret = $options['appSecret'];
-        $this->baseUrl = $options['baseUrl']??$this->baseUrl;
+        if (isset($options['appId'])) {
+            $this->appId = $options['appId'];
+        } else {
+            throw new InvalidArgumentException('参数错误');
+        }
+        if (isset($options['appSecret'])) {
+            $this->appSecret = $options['appSecret'];
+        } else {
+            throw new InvalidArgumentException('参数错误');
+        }
+        $this->baseUrl = $options['baseUrl'] ?? $this->baseUrl;
+        $this->version = $options['version'] ?? $this->version;
         $this->curl = $curl;
 
     }
@@ -69,6 +79,17 @@ class Fdd
     public function setBaseUrl(string $baseUrl): Fdd
     {
         $this->baseUrl = $baseUrl;
+        return $this;
+    }
+
+    /**
+     * 设置版本
+     * @param string $version
+     * @return Fdd
+     */
+    public function setVersion(string $version): Fdd
+    {
+        $this->version = $version;
         return $this;
     }
 
