@@ -6,7 +6,7 @@
  * Time: 09:24
  */
 
-namespace bonza\fdd;
+namespace bonza\fdd\extend;
 
 
 class Curl
@@ -16,9 +16,9 @@ class Curl
      * @param string $url 请求路由
      * @param string $method 请求方式post/get
      * @param string $data 传入参数
-     * @return \stdClass $temp 返回数组参数
+     * @return array $temp 返回数组参数
      */
-    public function sendRequest($url, $method = 'post', $data = ''):\stdClass
+    public function sendRequest($url, $method = 'post', $data = ''):array
     {
         $ch = curl_init(); //初始化
         $headers = ['Accept-Charset: utf-8'];
@@ -34,7 +34,7 @@ class Curl
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data); //提交数值
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); //是否输出到屏幕上,true不直接输出
         $temp = curl_exec($ch); //执行并获取结果
-        $temp = json_decode($temp);
+        $temp = json_decode($temp,true);
         curl_close($ch);
         return $temp; //return 返回值
     }

@@ -6,7 +6,12 @@
  * Time: 13:37
  */
 
-namespace bonza\fdd;
+namespace bonza\fdd\api;
+
+use bonza\fdd\exception\InvalidArgumentException;
+use bonza\fdd\extend\Curl;
+use bonza\fdd\interfaces\FddInterface;
+
 /**
  * 法大大API version2
  * Class FddApi2
@@ -14,16 +19,62 @@ namespace bonza\fdd;
  * @Date 2019-06-27
  * @package bonza\fdd
  */
-trait FddApi2
+class FddApi3 implements FddInterface
 {
+    /**
+     * @var string
+     */
+    private $appId;
+    /**
+     * @var string
+     */
+    private $appSecret;
+    /**
+     * @var string
+     */
+    private $timestamp;
+    /**
+     * @var string api版本
+     */
+    private $version = '2.0';
+    /**
+     * @var Curl
+     */
+    private $curl = null;
+    /**
+     * @var string
+     */
+    private $baseUrl = '';
+
+    /**
+     * @var string
+     */
+
+    public function __construct($options)
+    {
+        $this->timestamp = date("YmdHis");
+        if (isset($options['appId'])) {
+            $this->appId = $options['appId'];
+        } else {
+            throw new InvalidArgumentException('参数错误');
+        }
+        if (isset($options['appSecret'])) {
+            $this->appSecret = $options['appSecret'];
+        } else {
+            throw new InvalidArgumentException('参数错误');
+        }
+        $this->baseUrl = $options['baseUrl'] ?? $this->baseUrl;
+        $this->version = $options['version'] ?? $this->version;
+        $this->curl = new Curl();
+    }
 
     /**
      * 用户或企业账号 获取客户编码
-     * @param int $open_id 用户在接入方唯一id
+     * @param string $open_id 用户在接入方唯一id
      * @param int $account_type 账户类型，1个人，2企业
      * @return array
      */
-    public function accountRegister($open_id, $account_type = 1)
+    public function accountRegister(string $open_id,int $account_type = 1):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -42,6 +93,41 @@ trait FddApi2
             "account_type" => $account_type,
         ]);
     }
+
+    /**
+     *
+     *  获取企业实名认证地址
+     * @param string $customer_id
+     * @param string $notify_url
+     * @param string $legal_info
+     * @param int $page_modify
+     * @param int $company_principal_type
+     * @return array
+     */
+    public function getCompanyVerifyUrl($customer_id, $notify_url, $legal_info, $page_modify = 1, $company_principal_type = 1):array
+    {
+
+        $msg_digest = base64_encode(
+            strtoupper(
+                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $company_principal_type . $customer_id . $legal_info . $notify_url . $page_modify))
+                )
+            )
+        );
+        return $this->curl->sendRequest($this->baseUrl."get_company_verify_url". '.api', 'post', [
+            //公共参数
+            "app_id"                 => $this->appId,
+            "timestamp"              => $this->timestamp,
+            "v"                      => $this->version,
+            "msg_digest"             => $msg_digest,
+            //业务参数
+            "customer_id"            => $customer_id,//客户编号
+            "page_modify"            => $page_modify,//是否允许用户页面修改1 允许，2 不允许
+            "notify_url"             => $notify_url,//回调地址
+            "company_principal_type" => $company_principal_type,//企业负责人身份:1. 法人，2. 代理人
+            "legal_info"             => $legal_info,//法人信息
+        ]);
+    }
+
 
     /**
      * 实名信息哈希存证
@@ -97,7 +183,7 @@ trait FddApi2
      * @param string $verified_type
      * @return array
      */
-    public function personDeposit($customer_id, $name, $idcard, $mobile, $preservation_name, $preservation_data_provider, $mobile_essential_factor, $document_type = 0, $cert_flag = 1, $verified_type = 2)
+    public function personDeposit($customer_id, $name, $idcard, $mobile, $preservation_name, $preservation_data_provider, $mobile_essential_factor, $document_type = 0, $cert_flag = 1, $verified_type = 2):array
     {
         //verifiedType=2 公安部三要素
 //        $mobile_essential_factor = json_encode([
@@ -130,7 +216,6 @@ trait FddApi2
         ]);
     }
 
-
     /**
      *
      *
@@ -140,7 +225,7 @@ trait FddApi2
      * @param string $mobile
      * @return array
      */
-    public function threeElementVerifyMobile($name, $idcard, $mobile)
+    public function threeElementVerifyMobile($name, $idcard, $mobile):array
     {
         /**
          *
@@ -167,36 +252,11 @@ trait FddApi2
 
     /**
      *
-     * 3des加密
-     * @param string $data
-     * @param string $key
-     * @return array
-     */
-    private function encrypt($data, $key)
-    {
-        try {
-            if (!in_array('des-ede3', openssl_get_cipher_methods())) {
-                throw new \Exception('未知加密方法');
-            }
-            $ivLen = openssl_cipher_iv_length('des-ede3');
-            $iv = openssl_random_pseudo_bytes($ivLen);
-            $result = bin2hex(openssl_encrypt($data, 'des-ede3', $key, OPENSSL_RAW_DATA, $iv));
-            if (!$result) {
-                throw new \Exception('加密失败');
-            }
-            return [TRUE, $result];
-        } catch (\Exception $e) {
-            return [FALSE, $e->getMessage()];
-        }
-    }
-
-    /**
-     *
      * 查询个人实名认证信息
      * @param inter $verified_serialno
      * @return array
      */
-    public function findPersonCertInfo($verified_serialno)
+    public function findPersonCertInfo($verified_serialno):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -233,7 +293,7 @@ trait FddApi2
      * @param string $company_principal_type
      * @return array
      */
-    public function companyDeposit($transaction_id, $company_customer_id, $company_preservation_name, $company_preservation_data_provider, $company_name, $credit_code, $credit_code_file, $company_principal_verifie_msg, $applyNum, $power_attorney_file, $document_type = 1, $verified_mode = 1, $company_principal_type = 1)
+    public function companyDeposit($transaction_id, $company_customer_id, $company_preservation_name, $company_preservation_data_provider, $company_name, $credit_code, $credit_code_file, $company_principal_verifie_msg, $applyNum, $power_attorney_file, $document_type = 1, $verified_mode = 1, $company_principal_type = 1):array
     {
         //企业负责人信息
 //        $company_principal_verifie_msg = json_encode([
@@ -287,7 +347,7 @@ trait FddApi2
      * @param int $verified_serialno
      * @return array
      */
-    public function findCompanyCertInfo($verified_serialno)
+    public function findCompanyCertInfo($verified_serialno):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -314,7 +374,7 @@ trait FddApi2
      * @param string $evidence_no
      * @return array
      */
-    public function applyClientNumcert($customer_id, $evidence_no)
+    public function applyClientNumCert($customer_id, $evidence_no):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -343,7 +403,7 @@ trait FddApi2
      * @param string $signature_img_base64
      * @return array
      */
-    public function addSignature($customer_id, $signature_img_base64)
+    public function addSignature($customer_id, $signature_img_base64):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -370,7 +430,7 @@ trait FddApi2
      * @param string $signature_img_base64
      * @return array
      */
-    public function customSignature($customer_id, $content)
+    public function customSignature($customer_id, $content):array
     {
 
         $msg_digest = base64_encode(
@@ -402,7 +462,7 @@ trait FddApi2
      * @param string $doc_type
      * @return array
      */
-    public function uploaddocs($contract_id, $doc_title, $file, $doc_url, $doc_type = '.pdf')
+    public function uploadDocs($contract_id, $doc_title, $file, $doc_url, $doc_type = '.pdf'):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -429,13 +489,13 @@ trait FddApi2
     /**
      *
      *  模板上传
-     * @param string $contract_id
+     * @param $template_id
      * @param string $file
      * @param string $doc_url
      * @param string $doc_type
      * @return array
      */
-    public function uploadtemplate($template_id, $file, $doc_url, $doc_type = '.pdf')
+    public function uploadTemplate($template_id, $file, $doc_url, $doc_type = '.pdf'):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -469,7 +529,7 @@ trait FddApi2
      * @param string $font_type
      * @return array
      */
-    public function generateContract($doc_title, $template_id, $contract_id, $font_size, $parameter_map, $font_type)
+    public function generateContract($doc_title, $template_id, $contract_id, $font_size, $parameter_map, $font_type):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -506,7 +566,7 @@ trait FddApi2
      * @param string $y
      * @return array
      */
-    public function extsignAuto($transaction_id, $contract_id, $customer_id, $client_role, $pagenum, $x, $y)
+    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role, $pagenum, $x, $y):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -542,7 +602,7 @@ trait FddApi2
      * @param string $customer_mobile
      * @return array
      */
-    public function extsign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url, $customer_mobile)
+    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url, $customer_mobile):array
     {
 
         $msg_digest = base64_encode(
@@ -574,7 +634,7 @@ trait FddApi2
      * @param string $contract_id
      * @return array
      */
-    public function viewContract($contract_id)
+    public function viewContract($contract_id):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -600,7 +660,7 @@ trait FddApi2
      * @param string $contract_id
      * @return array
      */
-    public function downLoadContract($contract_id)
+    public function downLoadContract($contract_id):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -626,7 +686,7 @@ trait FddApi2
      * @param string $contract_id
      * @return array
      */
-    public function contractFiling($contract_id)
+    public function contractFiling($contract_id):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -647,41 +707,6 @@ trait FddApi2
 
 
     /**
-     *
-     *  获取企业实名认证地址
-     * @param string $customer_id
-     * @param string $notify_url
-     * @param string $legal_info
-     * @param string $page_modify
-     * @param string $company_principal_type
-     * @return array
-     */
-    public function getCompanyVerifyUrl($customer_id, $notify_url, $legal_info, $page_modify = 1, $company_principal_type = 1)
-    {
-
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $company_principal_type . $customer_id . $legal_info . $notify_url . $page_modify))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."get_company_verify_url". '.api', 'post', [
-            //公共参数
-            "app_id"                 => $this->appId,
-            "timestamp"              => $this->timestamp,
-            "v"                      => $this->version,
-            "msg_digest"             => $msg_digest,
-            //业务参数
-            "customer_id"            => $customer_id,//客户编号
-            "page_modify"            => $page_modify,//是否允许用户页面修改1 允许，2 不允许
-            "notify_url"             => $notify_url,//回调地址
-            "company_principal_type" => $company_principal_type,//企业负责人身份:1. 法人，2. 代理人
-            "legal_info"             => $legal_info,//法人信息
-        ]);
-    }
-
-
-    /**
      *  获取个人实名认证地址
      * @param string $customer_id
      * @param string $notify_url
@@ -689,7 +714,7 @@ trait FddApi2
      * @param string $page_modify
      * @return array
      */
-    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = 2, $page_modify = 1, $cert_flag = 0)
+    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = 2, $page_modify = 1, $cert_flag = 0):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -722,7 +747,7 @@ trait FddApi2
      * @param string $verified_serialno
      * @return array
      */
-    public function applyCert($customer_id, $verified_serialno)
+    public function applyCert($customer_id, $verified_serialno):array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -742,6 +767,7 @@ trait FddApi2
         ]);
     }
 
+
     /**
      *
      *  编号证书申请
@@ -749,7 +775,7 @@ trait FddApi2
      * @param string $verified_serialno
      * @return array
      */
-    public function applyNumcert($customer_id, $verified_serialno)
+    public function applyNumCert($customer_id, $verified_serialno):array
     {
 
         $msg_digest = base64_encode(
@@ -770,14 +796,13 @@ trait FddApi2
         ]);
     }
 
-
     /**
      *
      *  通过 uuid 下载文件
      * @param string $uuid
      * @return array
      */
-    public function getFile($uuid)
+    public function getFile($uuid):array
     {
         $timestamp = date("YmdHis");
         $msg_digest = base64_encode(
@@ -797,8 +822,9 @@ trait FddApi2
         ]);
     }
 
+
     /**
-     *ascll码排序
+     * ascll码排序
      * @param array $arr
      * @return array
      */
@@ -807,6 +833,31 @@ trait FddApi2
         sort($arr, $sf);
         $tmp = implode('', $arr);
         return $tmp;
+    }
+
+    /**
+     *
+     * 3des加密
+     * @param string $data
+     * @param string $key
+     * @return array
+     */
+    private function encrypt($data, $key)
+    {
+        try {
+            if (!in_array('des-ede3', openssl_get_cipher_methods())) {
+                throw new \Exception('未知加密方法');
+            }
+            $ivLen = openssl_cipher_iv_length('des-ede3');
+            $iv = openssl_random_pseudo_bytes($ivLen);
+            $result = bin2hex(openssl_encrypt($data, 'des-ede3', $key, OPENSSL_RAW_DATA, $iv));
+            if (!$result) {
+                throw new \Exception('加密失败');
+            }
+            return [TRUE, $result];
+        } catch (\Exception $e) {
+            return [FALSE, $e->getMessage()];
+        }
     }
 
 
