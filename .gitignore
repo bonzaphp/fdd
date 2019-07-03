@@ -4,3 +4,5 @@
 .vendor/*
 composer.lock
 /vendor/
+fdd.txt
+notify.php
