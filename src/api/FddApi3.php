@@ -120,6 +120,34 @@ class FddApi3 implements FddInterface
 
 
     /**
+     *  获取个人实名认证地址
+     * @param string $customer_id
+     * @param string $notify_url
+     * @param string $verified_way
+     * @param string $page_modify
+     * @param string $cert_flag
+     * @return array
+     */
+    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = '2', $page_modify = '1', $cert_flag = '0'): array
+    {
+        $msg_digest = $this->getMsgDigest(compact('customer_id', 'notify_url', 'verified_way', 'page_modify', 'cert_flag'));
+        return $this->curl->sendRequest($this->baseUrl . "get_person_verify_url" . '.api', 'post', [
+            //公共参数
+            "app_id"       => $this->appId,
+            "timestamp"    => $this->timestamp,
+            "v"            => $this->version,
+            "msg_digest"   => $msg_digest,
+            //业务参数
+            "customer_id"  => $customer_id,//客户编号
+            "verified_way" => $verified_way,//实名认证套餐类型
+            "page_modify"  => $page_modify,//是否允许用户页面修改1 允许，2 不允许
+            "notify_url"   => $notify_url,//回调地址 异步通知认证结果
+            "cert_flag"    => $cert_flag,//是否认证成功后自动申请实名证书参数值为“0”：不申请，参数值为“1”：自动申请
+        ]);
+    }
+
+
+    /**
      * 实名信息哈希存证
      * @param string $customer_id
      * @param string $transaction_id
@@ -151,7 +179,6 @@ class FddApi3 implements FddInterface
             "cert_flag"         => $cert_flag,//是否认证成 功后自动申请实名证书 参 数 值 为 “0”：不申 请， 参 数 值 为 “1”：自动 申请
         ]);
     }
-
 
     /**
      * 个人实名信息存证
@@ -321,6 +348,7 @@ class FddApi3 implements FddInterface
         ]);
     }
 
+
     /**
      *
      * 编号证书申请
@@ -342,7 +370,6 @@ class FddApi3 implements FddInterface
             "evidence_no " => $evidence_no,//实名信息存证时返回
         ]);
     }
-
 
     /**
      *
@@ -366,6 +393,7 @@ class FddApi3 implements FddInterface
             "signature_img_base64" => $signature_img_base64,//签章图片 base64
         ]);
     }
+
 
     /**
      *
@@ -601,34 +629,6 @@ class FddApi3 implements FddInterface
             "msg_digest"  => $msg_digest,
             //业务参数
             "contract_id" => $contract_id,//合同编号
-        ]);
-    }
-
-
-    /**
-     *  获取个人实名认证地址
-     * @param string $customer_id
-     * @param string $notify_url
-     * @param string $verified_way
-     * @param string $page_modify
-     * @param string $cert_flag
-     * @return array
-     */
-    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = '2', $page_modify = '1', $cert_flag = '0'): array
-    {
-        $msg_digest = $this->getMsgDigest(compact('customer_id', 'notify_url', 'verified_way', 'page_modify', 'cert_flag'));
-        return $this->curl->sendRequest($this->baseUrl . "get_person_verify_url" . '.api', 'post', [
-            //公共参数
-            "app_id"       => $this->appId,
-            "timestamp"    => $this->timestamp,
-            "v"            => $this->version,
-            "msg_digest"   => $msg_digest,
-            //业务参数
-            "customer_id"  => $customer_id,//客户编号
-            "verified_way" => $verified_way,//实名认证套餐类型
-            "page_modify"  => $page_modify,//是否允许用户页面修改1 允许，2 不允许
-            "notify_url"   => $notify_url,//回调地址 异步通知认证结果
-            "cert_flag"    => $cert_flag,//是否认证成功后自动申请实名证书参数值为“0”：不申请，参数值为“1”：自动申请
         ]);
     }
 
