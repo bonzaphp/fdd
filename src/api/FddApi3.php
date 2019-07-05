@@ -11,6 +11,7 @@ namespace bonza\fdd\api;
 use bonza\fdd\exception\InvalidArgumentException;
 use bonza\fdd\extend\Curl;
 use bonza\fdd\interfaces\FddInterface;
+use Exception;
 
 /**
  * 法大大API version2
@@ -49,7 +50,6 @@ class FddApi3 implements FddInterface
     /**
      * @var string
      */
-
     public function __construct($options)
     {
         $this->timestamp = date("YmdHis");
@@ -74,15 +74,10 @@ class FddApi3 implements FddInterface
      * @param int $account_type 账户类型，1个人，2企业
      * @return array
      */
-    public function accountRegister(string $open_id,int $account_type = 1):array
+    public function accountRegister(string $open_id, int $account_type = 1): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $account_type . $open_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."account_register". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('account_type', 'open_id'));
+        return $this->curl->sendRequest($this->baseUrl . "account_register" . '.api', 'post', [
             //公共参数
             "app_id"       => $this->appId,
             "timestamp"    => $this->timestamp,
@@ -104,16 +99,11 @@ class FddApi3 implements FddInterface
      * @param int $company_principal_type
      * @return array
      */
-    public function getCompanyVerifyUrl($customer_id, $notify_url, $legal_info, $page_modify = 1, $company_principal_type = 1):array
+    public function getCompanyVerifyUrl($customer_id, $notify_url, $legal_info, $page_modify = 1, $company_principal_type = 1): array
     {
 
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $company_principal_type . $customer_id . $legal_info . $notify_url . $page_modify))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."get_company_verify_url". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('company_principal_type', 'customer_id', 'legal_info', 'notify_url', 'page_modify'));
+        return $this->curl->sendRequest($this->baseUrl . "get_company_verify_url" . '.api', 'post', [
             //公共参数
             "app_id"                 => $this->appId,
             "timestamp"              => $this->timestamp,
@@ -141,16 +131,10 @@ class FddApi3 implements FddInterface
      * @param int $cert_flag 自动申请实名证书 参 数 值 为 “0”：不申 请， 参 数 值 为 “1”：自动 申请
      * @return array
      */
-    public function hashDeposit(string $customer_id,string  $transaction_id, string $preservation_name,string  $file_name,string $noper_time, string $file_size,string  $original_sha25,int $cert_flag = 0):array
+    public function hashDeposit(string $customer_id, string $transaction_id, string $preservation_name, string $file_name, string $noper_time, string $file_size, string $original_sha25, int $cert_flag = 0): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(
-                        sha1($this->appSecret . $cert_flag . $customer_id . $file_name . $file_size . $noper_time . $original_sha25 . $preservation_name . $transaction_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."hash_deposit". '.api', 'get', [
+        $msg_digest = $this->getMsgDigest(compact('cert_flag', 'customer_id', 'file_name', 'file_size', 'noper_time', 'original_sha25', 'preservation_name', 'transaction_id'));
+        return $this->curl->sendRequest($this->baseUrl . "hash_deposit" . '.api', 'get', [
             //公共参数
             "app_id"            => $this->appId,
             "timestamp"         => $this->timestamp,
@@ -183,20 +167,14 @@ class FddApi3 implements FddInterface
      * @param string $verified_type
      * @return array
      */
-    public function personDeposit($customer_id, $name, $idcard, $mobile, $preservation_name, $preservation_data_provider, $mobile_essential_factor, $document_type = 0, $cert_flag = 1, $verified_type = 2):array
+    public function personDeposit($customer_id, $name, $idcard, $mobile, $preservation_name, $preservation_data_provider, $mobile_essential_factor, $document_type = 0, $cert_flag = 1, $verified_type = 2): array
     {
         //verifiedType=2 公安部三要素
 //        $mobile_essential_factor = json_encode([
 //            'transactionId' => $transactionId,//交易号
 //        ]);
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1(
-                        $this->appSecret . $cert_flag . $customer_id . $document_type . $idcard . $mobile . $mobile_essential_factor . $name . $preservation_data_provider . $preservation_name . $verified_type))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."person_deposit". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('cert_flag', 'customer_id', 'document_type', 'idcard', 'mobile', 'mobile_essential_factor', 'name', 'preservation_data_provider', 'preservation_name', 'verified_type'));
+        return $this->curl->sendRequest($this->baseUrl . "person_deposit" . '.api', 'post', [
             //公共参数
             "app_id"                     => $this->appId,
             "timestamp"                  => $this->timestamp,
@@ -225,7 +203,7 @@ class FddApi3 implements FddInterface
      * @param string $mobile
      * @return array
      */
-    public function threeElementVerifyMobile($name, $idcard, $mobile):array
+    public function threeElementVerifyMobile($name, $idcard, $mobile): array
     {
         /**
          *
@@ -233,13 +211,8 @@ class FddApi3 implements FddInterface
          **/
         $verify_element = $this->encrypt($name . "|" . $idcard . "|" . $mobile, $this->appSecret);
         $verify_element = strtoupper($verify_element[1]);
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $verify_element))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."three_element_verify_mobile". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('verify_element'));
+        return $this->curl->sendRequest($this->baseUrl . "three_element_verify_mobile" . '.api', 'post', [
             //公共参数
             "app_id"         => $this->appId,
             "timestamp"      => $this->timestamp,
@@ -253,19 +226,13 @@ class FddApi3 implements FddInterface
     /**
      *
      * 查询个人实名认证信息
-     * @param inter $verified_serialno
+     * @param string $verified_serialno
      * @return array
      */
-    public function findPersonCertInfo($verified_serialno):array
+    public function findPersonCertInfo($verified_serialno): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1(
-                        $this->appSecret . $this->ascllSort([$verified_serialno])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."find_personCertInfo". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('verified_serialno'));
+        return $this->curl->sendRequest($this->baseUrl . "find_personCertInfo" . '.api', 'post', [
             //公共参数
             "app_id"            => $this->appId,
             "timestamp"         => $this->timestamp,
@@ -293,7 +260,7 @@ class FddApi3 implements FddInterface
      * @param string $company_principal_type
      * @return array
      */
-    public function companyDeposit($transaction_id, $company_customer_id, $company_preservation_name, $company_preservation_data_provider, $company_name, $credit_code, $credit_code_file, $company_principal_verifie_msg, $applyNum, $power_attorney_file, $document_type = 1, $verified_mode = 1, $company_principal_type = 1):array
+    public function companyDeposit($transaction_id, $company_customer_id, $company_preservation_name, $company_preservation_data_provider, $company_name, $credit_code, $credit_code_file, $company_principal_verifie_msg, $applyNum, $power_attorney_file, $document_type = 1, $verified_mode = 1, $company_principal_type = 1): array
     {
         //企业负责人信息
 //        $company_principal_verifie_msg = json_encode([
@@ -309,34 +276,27 @@ class FddApi3 implements FddInterface
         $public_security_essential_factor = json_encode([
             'applyNum' => $applyNum,//申请编号
         ]);
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $company_name . $company_principal_type . $company_principal_verifie_msg . $credit_code
-                        . $company_customer_id . $document_type . $company_preservation_data_provider . $company_preservation_name . $transaction_id . $verified_mode))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."company_deposit". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('company_name', 'company_principal_type', 'company_principal_verifie_msg', 'credit_cod','company_customer_id', 'document_type', 'company_preservation_data_provider', 'company_preservation_name', 'transaction_id', 'verified_mod'));
+        return $this->curl->sendRequest($this->baseUrl . "company_deposit" . '.api', 'post', [
             //公共参数
-            "app_id"                           => $this->appId,
-            "timestamp"                        => $this->timestamp,
-            "v"                                => $this->version,
-            "msg_digest"                       => $msg_digest,
+            "app_id"                            => $this->appId,
+            "timestamp"                         => $this->timestamp,
+            "v"                                 => $this->version,
+            "msg_digest"                        => $msg_digest,
             //业务参数
-            "customer_id"                      => $company_customer_id,//企业客户编号
-            "preservation_name "               => $company_preservation_name,//企业存证名称
-            "preservation_data_provider"       => $company_preservation_data_provider,//存证提供者
-            "company_name"                     => $company_name,//企业名称
-            "document_type"                    => $document_type,//证件类型 1:三证合一 2：旧版营业执照
-            "credit_code"                      => $credit_code,//统 一社 会信用代码
-            "credit_code_file"                 => $credit_code_file,//统 一社 会信 用代 码电子版
-            "verified_mode"                    => $verified_mode,//实 名认 证方式1:授权委托书 2:银行对公打款
-            "power_attorney_file"              => $power_attorney_file,//授 权委 托书电子版
-            "company_principal_type"           => $company_principal_type,//企 业负 责人身份 :1.法人， 2 代理人
-            "company_principal_verifie_msg"    => $company_principal_verifie_msg,//json 企 业负 责人 实名 存证 信息
-            "transaction_id"                   => $transaction_id,//交易号
+            "customer_id"                       => $company_customer_id,//企业客户编号
+            "preservation_name "                => $company_preservation_name,//企业存证名称
+            "preservation_data_provider"        => $company_preservation_data_provider,//存证提供者
+            "company_name"                      => $company_name,//企业名称
+            "document_type"                     => $document_type,//证件类型 1:三证合一 2：旧版营业执照
+            "credit_code"                       => $credit_code,//统 一社 会信用代码
+            "credit_code_file"                  => $credit_code_file,//统 一社 会信 用代 码电子版
+            "verified_mode"                     => $verified_mode,//实 名认 证方式1:授权委托书 2:银行对公打款
+            "power_attorney_file"               => $power_attorney_file,//授 权委 托书电子版
+            "company_principal_type"            => $company_principal_type,//企 业负 责人身份 :1.法人， 2 代理人
+            "company_principal_verifie_msg"     => $company_principal_verifie_msg,//json 企 业负 责人 实名 存证 信息
+            "transaction_id"                    => $transaction_id,//交易号
             'public _security_essential_factor' => $public_security_essential_factor,
-            'power_attorney_file'              => $power_attorney_file,//授 权委 托书电子版
         ]);
     }
 
@@ -347,16 +307,10 @@ class FddApi3 implements FddInterface
      * @param int $verified_serialno
      * @return array
      */
-    public function findCompanyCertInfo($verified_serialno):array
+    public function findCompanyCertInfo($verified_serialno): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1(
-                        $this->appSecret . $this->ascllSort([$verified_serialno])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."find_companyCertInfo". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('verified_serialno'));
+        return $this->curl->sendRequest($this->baseUrl . "find_companyCertInfo" . '.api', 'post', [
             //公共参数
             "app_id"            => $this->appId,
             "timestamp"         => $this->timestamp,
@@ -374,15 +328,10 @@ class FddApi3 implements FddInterface
      * @param string $evidence_no
      * @return array
      */
-    public function applyClientNumCert($customer_id, $evidence_no):array
+    public function applyClientNumCert($customer_id, $evidence_no): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $customer_id . $evidence_no))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."apply_client_numcert". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id', 'evidence_no'));
+        return $this->curl->sendRequest($this->baseUrl . "apply_client_numcert" . '.api', 'post', [
             //公共参数
             "app_id"       => $this->appId,
             "timestamp"    => $this->timestamp,
@@ -403,15 +352,10 @@ class FddApi3 implements FddInterface
      * @param string $signature_img_base64
      * @return array
      */
-    public function addSignature($customer_id, $signature_img_base64):array
+    public function addSignature($customer_id, $signature_img_base64): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$customer_id, $signature_img_base64])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."add_signature". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id', 'signature_img_base64'));
+        return $this->curl->sendRequest($this->baseUrl . "add_signature" . '.api', 'post', [
             //公共参数
             "app_id"               => $this->appId,
             "timestamp"            => $this->timestamp,
@@ -427,19 +371,14 @@ class FddApi3 implements FddInterface
      *
      * 新增用户签章图片
      * @param string $customer_id
-     * @param string $signature_img_base64
+     * @param $content
      * @return array
      */
-    public function customSignature($customer_id, $content):array
+    public function customSignature($customer_id, $content): array
     {
 
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$content, $customer_id])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."custom_signature". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('content', 'customer_id'));
+        return $this->curl->sendRequest($this->baseUrl . "custom_signature" . '.api', 'post', [
             //公共参数
             "app_id"      => $this->appId,
             "timestamp"   => $this->timestamp,
@@ -462,15 +401,10 @@ class FddApi3 implements FddInterface
      * @param string $doc_type
      * @return array
      */
-    public function uploadDocs($contract_id, $doc_title, $file, $doc_url, $doc_type = '.pdf'):array
+    public function uploadDocs($contract_id, $doc_title, $file, $doc_url, $doc_type = '.pdf'): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$contract_id])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."uploaddocs". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('contract_id'));
+        return $this->curl->sendRequest($this->baseUrl . "uploaddocs" . '.api', 'post', [
             //公共参数
             "app_id"      => $this->appId,
             "timestamp"   => $this->timestamp,
@@ -495,15 +429,10 @@ class FddApi3 implements FddInterface
      * @param string $doc_type
      * @return array
      */
-    public function uploadTemplate($template_id, $file, $doc_url, $doc_type = '.pdf'):array
+    public function uploadTemplate($template_id, $file, $doc_url, $doc_type = '.pdf'): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$template_id])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."uploadtemplate". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('template_id'));
+        return $this->curl->sendRequest($this->baseUrl . "uploadtemplate" . '.api', 'post', [
             //公共参数
             "app_id"      => $this->appId,
             "timestamp"   => $this->timestamp,
@@ -529,15 +458,10 @@ class FddApi3 implements FddInterface
      * @param string $font_type
      * @return array
      */
-    public function generateContract($doc_title, $template_id, $contract_id, $font_size, $parameter_map, $font_type):array
+    public function generateContract($doc_title, $template_id, $contract_id, $font_size, $parameter_map, $font_type): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $template_id . $contract_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."generate_contract". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('template_id','contract_id'));
+        return $this->curl->sendRequest($this->baseUrl . "generate_contract" . '.api', 'post', [
             //公共参数
             "app_id"        => $this->appId,
             "timestamp"     => $this->timestamp,
@@ -566,15 +490,10 @@ class FddApi3 implements FddInterface
      * @param string $y
      * @return array
      */
-    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role, $pagenum, $x, $y):array
+    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role, $pagenum, $x, $y): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $customer_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."extsign_auto". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id'));
+        return $this->curl->sendRequest($this->baseUrl . "extsign_auto" . '.api', 'post', [
             //公共参数
             "app_id"         => $this->appId,
             "timestamp"      => $this->timestamp,
@@ -602,16 +521,11 @@ class FddApi3 implements FddInterface
      * @param string $customer_mobile
      * @return array
      */
-    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url, $customer_mobile):array
+    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url, $customer_mobile): array
     {
 
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $customer_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."extsign". '.api', 'get', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id'));
+        return $this->curl->sendRequest($this->baseUrl . "extsign" . '.api', 'get', [
             //公共参数
             "app_id"          => $this->appId,
             "timestamp"       => $this->timestamp,
@@ -634,15 +548,10 @@ class FddApi3 implements FddInterface
      * @param string $contract_id
      * @return array
      */
-    public function viewContract($contract_id):array
+    public function viewContract($contract_id): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $contract_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."view_contract". '.api', 'get', [
+        $msg_digest = $this->getMsgDigest(compact('contract_id'));
+        return $this->curl->sendRequest($this->baseUrl . "view_contract" . '.api', 'get', [
             //公共参数
             "app_id"      => $this->appId,
             "timestamp"   => $this->timestamp,
@@ -660,15 +569,10 @@ class FddApi3 implements FddInterface
      * @param string $contract_id
      * @return array
      */
-    public function downLoadContract($contract_id):array
+    public function downLoadContract($contract_id): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $contract_id))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."downLoadContract". '.api', 'get', [
+        $msg_digest = $this->getMsgDigest(compact('contract_id'));
+        return $this->curl->sendRequest($this->baseUrl . "downLoadContract" . '.api', 'get', [
             //公共参数
             "app_id"      => $this->appId,
             "timestamp"   => $this->timestamp,
@@ -686,15 +590,10 @@ class FddApi3 implements FddInterface
      * @param string $contract_id
      * @return array
      */
-    public function contractFiling($contract_id):array
+    public function contractFiling($contract_id): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$contract_id])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."contractFiling". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('contract_id'));
+        return $this->curl->sendRequest($this->baseUrl . "contractFiling" . '.api', 'post', [
             //公共参数
             "app_id"      => $this->appId,
             "timestamp"   => $this->timestamp,
@@ -712,18 +611,13 @@ class FddApi3 implements FddInterface
      * @param string $notify_url
      * @param string $verified_way
      * @param string $page_modify
+     * @param string $cert_flag
      * @return array
      */
-    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = 2, $page_modify = 1, $cert_flag = 0):array
+    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = '2', $page_modify = '1', $cert_flag = '0'): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1(
-                        $this->appSecret . $this->ascllSort([$cert_flag, $customer_id, $notify_url, $page_modify, $verified_way])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."get_person_verify_url". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id', 'notify_url', 'verified_way', 'page_modify', 'cert_flag'));
+        return $this->curl->sendRequest($this->baseUrl . "get_person_verify_url" . '.api', 'post', [
             //公共参数
             "app_id"       => $this->appId,
             "timestamp"    => $this->timestamp,
@@ -747,15 +641,10 @@ class FddApi3 implements FddInterface
      * @param string $verified_serialno
      * @return array
      */
-    public function applyCert($customer_id, $verified_serialno):array
+    public function applyCert($customer_id, $verified_serialno): array
     {
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$customer_id, $verified_serialno])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."apply_cert". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id', 'verified_serialno'));
+        return $this->curl->sendRequest($this->baseUrl . "apply_cert" . '.api', 'post', [
             //公共参数
             "app_id"            => $this->appId,
             "timestamp"         => $this->timestamp,
@@ -775,16 +664,11 @@ class FddApi3 implements FddInterface
      * @param string $verified_serialno
      * @return array
      */
-    public function applyNumCert($customer_id, $verified_serialno):array
+    public function applyNumCert($customer_id, $verified_serialno): array
     {
 
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$customer_id, $verified_serialno])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."apply_numcert". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('customer_id', 'verified_serialno'));
+        return $this->curl->sendRequest($this->baseUrl . "apply_numcert" . '.api', 'post', [
             //公共参数
             "app_id"            => $this->appId,
             "timestamp"         => $this->timestamp,
@@ -802,16 +686,10 @@ class FddApi3 implements FddInterface
      * @param string $uuid
      * @return array
      */
-    public function getFile($uuid):array
+    public function getFile($uuid): array
     {
-        $timestamp = date("YmdHis");
-        $msg_digest = base64_encode(
-            strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1($this->appSecret . $this->ascllSort([$uuid])))
-                )
-            )
-        );
-        return $this->curl->sendRequest($this->baseUrl."get_file". '.api', 'post', [
+        $msg_digest = $this->getMsgDigest(compact('uuid'));
+        return $this->curl->sendRequest($this->baseUrl . "get_file" . '.api', 'post', [
             //公共参数
             "app_id"     => $this->appId,
             "timestamp"  => $this->timestamp,
@@ -830,9 +708,8 @@ class FddApi3 implements FddInterface
      */
     private function ascllSort($arr, $sf = 0)
     {
-        sort($arr, $sf);
-        $tmp = implode('', $arr);
-        return $tmp;
+        ksort($arr, $sf);
+        return implode('', $arr);
     }
 
     /**
@@ -846,18 +723,35 @@ class FddApi3 implements FddInterface
     {
         try {
             if (!in_array('des-ede3', openssl_get_cipher_methods())) {
-                throw new \Exception('未知加密方法');
+                throw new Exception('未知加密方法');
             }
             $ivLen = openssl_cipher_iv_length('des-ede3');
             $iv = openssl_random_pseudo_bytes($ivLen);
             $result = bin2hex(openssl_encrypt($data, 'des-ede3', $key, OPENSSL_RAW_DATA, $iv));
             if (!$result) {
-                throw new \Exception('加密失败');
+                throw new Exception('加密失败');
             }
             return [TRUE, $result];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [FALSE, $e->getMessage()];
         }
+    }
+
+    /**
+     * 对业务参数进行处理，生成实际(msg_digest)消息摘要
+     * @param array $data 必须是键值数组
+     * @return string
+     * @author bonzaphp@gmail.com
+     */
+    private function getMsgDigest(array $data): string
+    {
+        return base64_encode(
+            strtoupper(
+                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1(
+                        $this->appSecret . $this->ascllSort($data)))
+                )
+            )
+        );
     }
 
 
