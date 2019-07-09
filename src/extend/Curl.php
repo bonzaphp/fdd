@@ -9,6 +9,8 @@
 namespace bonza\fdd\extend;
 
 
+use bonza\fdd\exception\JsonException;
+
 class Curl
 {
     /**
@@ -25,6 +27,7 @@ class Curl
         //设置URL和相应的选项
         curl_setopt($ch, CURLOPT_URL, $url); //指定请求的URL
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method)); //提交方式
+        curl_setopt($ch, CURLOPT_BINARYTRANSFER,true);//二进制流
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); //不验证SSL
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE); //不验证SSL
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers); //设置HTTP头字段的数组
@@ -35,7 +38,35 @@ class Curl
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); //是否输出到屏幕上,true不直接输出
         $temp = curl_exec($ch); //执行并获取结果
         $temp = json_decode($temp,true);
+        if (function_exists('json_last_error') && $errMsg = json_last_error()) {
+            static::handleJsonError($errMsg);
+        } elseif ($temp === null && $data !== 'null') {
+            throw new JsonException('Null result with non-null input');
+        }
         curl_close($ch);
         return $temp; //return 返回值
     }
+
+    /**
+     * 处理json编码过程中可能出现的异常
+     * @param $errMsg
+     */
+    protected static function handleJsonError($errMsg)
+    {
+        $messages = [
+            JSON_ERROR_DEPTH => 'Maximum stack depth exceeded',
+            JSON_ERROR_STATE_MISMATCH => 'Underflow or the modes mismatch',
+            JSON_ERROR_CTRL_CHAR => 'Unexpected control character found',
+            JSON_ERROR_SYNTAX => 'Syntax error, malformed JSON',
+            JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded', //PHP >= 5.3.3
+            JSON_ERROR_NONE => 'Unknown error',
+        ];
+        throw new JsonException(
+            isset($messages[$errMsg])
+                ? $messages[$errMsg]
+                : 'Unknown JSON error: ' . $errMsg
+        );
+    }
+
+
 }

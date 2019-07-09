@@ -11,6 +11,7 @@ namespace bonza\fdd\api;
 use bonza\fdd\exception\InvalidArgumentException;
 use bonza\fdd\extend\Curl;
 use bonza\fdd\interfaces\FddInterface;
+use CURLFile;
 use Exception;
 
 /**
@@ -105,15 +106,36 @@ class FddApi3 implements FddInterface
     /**
      *  获取个人实名认证地址
      * @param string $customer_id 客户编号
-     * @param string $notify_url 实名认证套餐类型
-     * @param string $verified_way 是否允许用户页面修改1 允许，2 不允许
-     * @param string $page_modify 回调地址 异步通知认证结果
+     * @param string $notify_url   回调地址 异步通知认证结果
+     * @param string $verified_way 实名认证套餐类型
+     * @param string $page_modify   是否允许用户页面修改1 允许，2 不允许
      * @param string $cert_flag 是否认证成功后自动申请实名证书参数值为 “0”：不申请，参数值为“1”：自动申请
      * @return array
      */
     public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = '2', $page_modify = '1', $cert_flag = '0'): array
     {
-        $personalParams = compact('customer_id', 'notify_url', 'verified_way', 'page_modify', 'cert_flag');
+/*        cert_flag
+        customer_id
+        customer_ident_no
+        customer_ident_type
+        customer_name
+        ident_front_path
+        notify_url
+        page_modify
+        result_type
+        return_url
+        verified_way*/
+
+        $customer_ident_no = '220282199103072937';
+        $customer_ident_type = '0';
+        $customer_name = '王志闯';
+        $mobile = '18129986450';
+        $ident_front_path = 'http://www.ydjituan.com/images/yd1.jpg';
+
+        $personalParams = compact('customer_id',
+            'notify_url', 'verified_way', 'page_modify',
+            'cert_flag','customer_ident_no','customer_ident_type','customer_name',
+            'mobile','ident_front_path');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
         return $this->curl->sendRequest($this->baseUrl . "get_person_verify_url" . '.api', 'post', $params);
@@ -348,7 +370,7 @@ class FddApi3 implements FddInterface
             //业务参数
             "template_id" => $template_id,
             "doc_url"     => $doc_url,
-            "file"        => $file,
+            "file"        => new CURLFile($file),
             "doc_type"    => $doc_type,
         ];
         $params = $this->getCommonParams($msg_digest) + $personalParams;
