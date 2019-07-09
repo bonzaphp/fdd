@@ -20,6 +20,9 @@ use bonza\fdd\api\FddApi3;
  * @method customSignature(...$string): array 新增用户签章 自定义印章
  * @method uploadDocs(...$string): array 合同上传
  * @method uploadTemplate(...$string): array 模板上传
+ * @method viewTemplate(...$string): array 查看模版
+ * @method templateDownload(...$string): array 下载模版
+ * @method templateDelete(...$string): array 模版删除
  * @method generateContract(...$string): array 模板填充
  * @method extSignAuto(...$string): array 自动签署
  * @method extSign(...$string): array 手动签署接口
