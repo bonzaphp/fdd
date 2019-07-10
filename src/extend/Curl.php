@@ -52,9 +52,9 @@ class Curl
      * @param string $url 请求路由
      * @param string $method 请求方式post/get
      * @param string $data 传入参数
-     * @return array $temp 返回数组参数
+     * @return mixed $temp 返回数组参数
      */
-    public function sendRequestReturnOriginal($url, $method = 'post', $data = ''):array
+    public function sendRequestReturnOriginal($url, $method = 'post', $data = '')
     {
         $ch = curl_init(); //初始化
         $headers = ['Accept-Charset: utf-8'];

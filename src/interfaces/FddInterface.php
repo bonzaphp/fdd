@@ -20,8 +20,8 @@ Interface FddInterface
 
     public function uploadDocs($contract_id, $doc_title, $file, $doc_url, $doc_type = '.pdf'):array;/*合同上传*/
     public function uploadTemplate($template_id, $file, $doc_url, $doc_type = '.pdf'):array;/*模板上传*/
-    public function viewTemplate($template_id):array;/*查看合同模版*/
-    public function templateDownload($template_id):array;/*下载合同模板*/
+    public function viewTemplate($template_id);/*查看合同模版*/
+    public function templateDownload($template_id);/*下载合同模板*/
     public function templateDelete($template_id):array;/*模板删除*/
     public function generateContract($doc_title, $template_id, $contract_id, $font_size, $parameter_map, $font_type):array;/*模板填充*/
     public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role, $pagenum, $x, $y):array;/*自动签署*/

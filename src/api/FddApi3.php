@@ -381,30 +381,30 @@ class FddApi3 implements FddInterface
      * 查看合同模版
      *
      * @param $template_id
-     * @return array
+     * @return mixed
      * @author bonzaphp@gmail.com
      */
-    public function viewTemplate($template_id):array
+    public function viewTemplate($template_id)
     {
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        return $this->curl->sendRequest($this->baseUrl . "view_template" . '.api','get',$params);
+        return $this->baseUrl . "view_template" . '.api'.'?'.http_build_query($params);
     }
 
     /**
      * 下载合同模版
      *
      * @param $template_id
-     * @return array
+     * @return string
      * @author bonzaphp@gmail.com
      */
-    public function templateDownload($template_id):array
+    public function templateDownload($template_id)
     {
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        return $this->curl->sendRequest($this->baseUrl . "download_template" . '.api','get',$params);
+        return $this->baseUrl . "download_template" . '.api'.'?'.http_build_query($params);
     }
 
     /**
@@ -419,7 +419,7 @@ class FddApi3 implements FddInterface
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        return $this->curl->sendRequest($this->baseUrl . "download_template" . '.api','post',$params);
+        return $this->curl->sendRequest($this->baseUrl . "template_delete" . '.api','post',$params);
     }
 
     /**
