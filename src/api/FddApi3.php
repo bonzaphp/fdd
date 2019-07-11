@@ -444,7 +444,6 @@ class FddApi3 implements FddInterface
             "font_type"     => $font_type,
         ];
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        file_put_contents('fdd.txt', json_encode($params, JSON_PRETTY_PRINT) . PHP_EOL, 8);
         return $this->curl->sendRequest($this->baseUrl . "generate_contract" . '.api', 'post', $params);
     }
 
