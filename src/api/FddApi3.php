@@ -106,36 +106,34 @@ class FddApi3 implements FddInterface
     /**
      *  获取个人实名认证地址
      * @param string $customer_id 客户编号
-     * @param string $notify_url   回调地址 异步通知认证结果
+     * @param string $notify_url 回调地址 异步通知认证结果
      * @param string $verified_way 实名认证套餐类型
-     * @param string $page_modify   是否允许用户页面修改1 允许，2 不允许
+     * @param string $page_modify 是否允许用户页面修改1 允许，2 不允许
      * @param string $cert_flag 是否认证成功后自动申请实名证书参数值为 “0”：不申请，参数值为“1”：自动申请
      * @return array
      */
     public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = '2', $page_modify = '1', $cert_flag = '0'): array
     {
-/*        cert_flag
-        customer_id
-        customer_ident_no
-        customer_ident_type
-        customer_name
-        ident_front_path
-        notify_url
-        page_modify
-        result_type
-        return_url
-        verified_way*/
-
+        /*        cert_flag
+                customer_id
+                customer_ident_no
+                customer_ident_type
+                customer_name
+                ident_front_path
+                notify_url
+                page_modify
+                result_type
+                return_url
+                verified_way*/
         $customer_ident_no = '220282199103072937';
         $customer_ident_type = '0';
         $customer_name = '王志闯';
         $mobile = '18129986450';
         $ident_front_path = 'http://www.ydjituan.com/images/yd1.jpg';
-
         $personalParams = compact('customer_id',
             'notify_url', 'verified_way', 'page_modify',
-            'cert_flag','customer_ident_no','customer_ident_type','customer_name',
-            'mobile','ident_front_path');
+            'cert_flag', 'customer_ident_no', 'customer_ident_type', 'customer_name',
+            'mobile', 'ident_front_path');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
         return $this->curl->sendRequest($this->baseUrl . "get_person_verify_url" . '.api', 'post', $params);
@@ -151,7 +149,7 @@ class FddApi3 implements FddInterface
      * @param string $file_size 文件大小  字符类型；值单位（byte） ;最大值:“9223372036854775807” >> 2^63-1 最小值:0sha256
      * @param string $original_sha25 文件哈希值 文件 hash 值： sha256 算法
      * @param string $transaction_id 交易号  自定义
-     * @param int    $cert_flag 是否认证成 功后自动申请实名证书 参 数 值 为 “0”：不申 请， 参 数 值 为 “1”：自动 申请
+     * @param int $cert_flag 是否认证成 功后自动申请实名证书 参 数 值 为 “0”：不申 请， 参 数 值 为 “1”：自动 申请
      * @return array
      */
     public function hashDeposit(string $customer_id, string $transaction_id, string $preservation_name, string $file_name, string $noper_time, string $file_size, string $original_sha25, int $cert_flag = 0): array
@@ -172,7 +170,7 @@ class FddApi3 implements FddInterface
      * @param string $idcard 证件号
      * @param string $mobile 手机号
      * @param string $document_type 证件类型 默认是 0：身份证， 具体查看 5.18 附录
-     * @param string $mobile_essential_factor  手机三要素
+     * @param string $mobile_essential_factor 手机三要素
      * @param string $cert_flag 是 否认 证成 功后 自动 申请 实名证书参 数值 为“0”：不申请，参 数值 为“1”：自动申请
      * @return array
      */
@@ -389,7 +387,7 @@ class FddApi3 implements FddInterface
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        return $this->baseUrl . "view_template" . '.api'.'?'.http_build_query($params);
+        return $this->baseUrl . "view_template" . '.api' . '?' . http_build_query($params);
     }
 
     /**
@@ -404,7 +402,7 @@ class FddApi3 implements FddInterface
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        return $this->baseUrl . "download_template" . '.api'.'?'.http_build_query($params);
+        return $this->baseUrl . "download_template" . '.api' . '?' . http_build_query($params);
     }
 
     /**
@@ -414,12 +412,12 @@ class FddApi3 implements FddInterface
      * @return array
      * @author bonzaphp@gmail.com
      */
-    public function templateDelete($template_id):array
+    public function templateDelete($template_id): array
     {
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
-        return $this->curl->sendRequest($this->baseUrl . "template_delete" . '.api','post',$params);
+        return $this->curl->sendRequest($this->baseUrl . "template_delete" . '.api', 'post', $params);
     }
 
     /**
@@ -435,7 +433,7 @@ class FddApi3 implements FddInterface
      */
     public function generateContract($doc_title, $template_id, $contract_id, $font_size, $parameter_map, $font_type): array
     {
-        $msg_digest = $this->getMsgDigest(compact('template_id', 'contract_id'));
+        $msg_digest = $this->getMsgDigest(compact('template_id', 'contract_id'), $parameter_map);
         $personalParams = [
             //业务参数
             "doc_title"     => $doc_title,
@@ -446,6 +444,7 @@ class FddApi3 implements FddInterface
             "font_type"     => $font_type,
         ];
         $params = $this->getCommonParams($msg_digest) + $personalParams;
+        file_put_contents('fdd.txt', json_encode($params, JSON_PRETTY_PRINT) . PHP_EOL, 8);
         return $this->curl->sendRequest($this->baseUrl . "generate_contract" . '.api', 'post', $params);
     }
 
@@ -611,11 +610,12 @@ class FddApi3 implements FddInterface
     /**
      * ascll码排序
      * @param array $arr
+     * @param int $sorting_type 排序参数
      * @return array
      */
-    private function ascllSort($arr, $sf = 0)
+    private function ascllSort($arr, $sorting_type = 0)
     {
-        ksort($arr, $sf);
+        ksort($arr, $sorting_type);
         return implode('', $arr);
     }
 
@@ -647,15 +647,28 @@ class FddApi3 implements FddInterface
     /**
      * 对业务参数进行处理，生成实际(msg_digest)消息摘要
      * @param array $data 必须是键值数组
+     * @param string $parameter_map
      * @return string
      * @author bonzaphp@gmail.com
      */
-    private function getMsgDigest(array $data): string
+    private function getMsgDigest(array $data, string $parameter_map = ''): string
     {
+        if (!empty($parameter_map) && isset($parameter_map)) {
+            $ascllSort = $data['template_id'].$data['contract_id'];
+        } else {
+            $ascllSort = $this->ascllSort($data);
+        }
         return base64_encode(
             strtoupper(
-                sha1($this->appId . strtoupper(md5($this->timestamp)) . strtoupper(sha1(
-                        $this->appSecret . $this->ascllSort($data)))
+                sha1(
+                    $this->appId
+                    . strtoupper(md5($this->timestamp))
+                    . strtoupper(
+                        sha1(
+                            $this->appSecret . $ascllSort
+                        )
+                    )
+                    . $parameter_map
                 )
             )
         );
