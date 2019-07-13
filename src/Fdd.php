@@ -26,7 +26,7 @@ use bonza\fdd\api\FddApi3;
  * @method generateContract(...$string): array 模板填充
  * @method extSignAuto(...$string): array 自动签署
  * @method extSign(...$string): array 手动签署接口
- * @method viewContract(...$string): array 此接口将打开 合同查看
+ * @method viewContract(...$string): string 此接口将打开 合同查看
  * @method downLoadContract(...$string): array 合同下载
  * @method contractFiling(...$string): array 合同归档
  * @method findPersonCertInfo(...$string): array 查询个人实名认证信息

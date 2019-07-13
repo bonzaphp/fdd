@@ -379,10 +379,10 @@ class FddApi3 implements FddInterface
      * 查看合同模版
      *
      * @param $template_id
-     * @return mixed
+     * @return string
      * @author bonzaphp@gmail.com
      */
-    public function viewTemplate($template_id)
+    public function viewTemplate(string $template_id): string
     {
         $personalParams = compact('template_id');
         $msg_digest = $this->getMsgDigest($personalParams);
@@ -485,10 +485,10 @@ class FddApi3 implements FddInterface
      * @param string $customer_id 客户编号
      * @param string $doc_title 客户角色  1-接入平台；2-仅适用互金行业担保公司或担保人；3-接入平台客户（互金行业指投资人）；4-仅适用互金行业借款企业或者借款人如果需要开通自动签权限请联系法
      * @param string $return_url 页面跳转URL（签署结果同步通知）
-     * @param string $customer_mobile 手机号
-     * @return array
+     * @param string $sign_keyword
+     * @return string
      */
-    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url, $customer_mobile): array
+    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url = '',$sign_keyword = ''): string
     {
 
         $msg_digest = $this->getMsgDigest(compact('customer_id'));
@@ -499,43 +499,41 @@ class FddApi3 implements FddInterface
                 "customer_id"     => $customer_id,
                 "doc_title"       => $doc_title,
                 "return_url"      => $return_url,
-                "customer_mobile" => $customer_mobile,
+                "sign_keyword" => $sign_keyword,
             ];
-        return $this->curl->sendRequest($this->baseUrl . "extsign" . '.api', 'get', $params);
+        return $this->baseUrl . "extsign" . '.api' . '?' . http_build_query($params);
     }
 
 
     /**
-     *此接口将打开页面
-     *  合同查看
+     * 此接口将打开页面 合同查看
      * @param string $contract_id
-     * @return array
+     * @return string
      */
-    public function viewContract($contract_id): array
+    public function viewContract(string $contract_id): string
     {
         $msg_digest = $this->getMsgDigest(compact('contract_id'));
         $params = $this->getCommonParams($msg_digest) + [
                 //业务参数
                 "contract_id" => $contract_id,//合同编号
             ];
-        return $this->curl->sendRequest($this->baseUrl . "view_contract" . '.api', 'get', $params);
+        return $this->baseUrl . "viewContract" . '.api' . '?' . http_build_query($params);
     }
 
 
     /**
-     *
      *  合同下载
-     * @param string $contract_id
-     * @return array
+     * @param string $contract_id 合同账号
+     * @return string
      */
-    public function downLoadContract($contract_id): array
+    public function downLoadContract(string $contract_id):string
     {
         $msg_digest = $this->getMsgDigest(compact('contract_id'));
         $params = $this->getCommonParams($msg_digest) + [
                 //业务参数
                 "contract_id" => $contract_id,//合同编号
             ];
-        return $this->curl->sendRequest($this->baseUrl . "downLoadContract" . '.api', 'get', $params);
+        return $this->baseUrl . "downLoadContract" . '.api'.'?'.http_build_query($params);
     }
 
 
@@ -653,7 +651,7 @@ class FddApi3 implements FddInterface
     private function getMsgDigest(array $data, string $parameter_map = ''): string
     {
         if (!empty($parameter_map) && isset($parameter_map)) {
-            $ascllSort = $data['template_id'].$data['contract_id'];
+            $ascllSort = $data['template_id'] . $data['contract_id'];
         } else {
             $ascllSort = $this->ascllSort($data);
         }
