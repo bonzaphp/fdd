@@ -111,30 +111,16 @@ class FddApi3 implements FddInterface
      * @param string $verified_way 实名认证套餐类型
      * @param string $page_modify 是否允许用户页面修改1 允许，2 不允许
      * @param string $cert_flag 是否认证成功后自动申请实名证书参数值为 “0”：不申请，参数值为“1”：自动申请
+     * @param string $mobile 手机号
+     * @param int $customer_ident_type 证件类型，0，身份证
+     * @param string $customer_ident_no 证件号码
+     * @param string $customer_name 姓名
+     * @param string $ident_front_path 手机号
      * @return array
      */
-    public function getPersonVerifyUrl($customer_id, $notify_url, $verified_way = '2', $page_modify = '1', $cert_flag = '0'): array
+    public function getPersonVerifyUrl($customer_id, $notify_url, $mobile = '',$customer_name = '',$customer_ident_no='',$ident_front_path = '',$verified_way = '1', $page_modify = '1', $cert_flag = '1', $customer_ident_type = 0): array
     {
-        /*        cert_flag
-                customer_id
-                customer_ident_no
-                customer_ident_type
-                customer_name
-                ident_front_path
-                notify_url
-                page_modify
-                result_type
-                return_url
-                verified_way*/
-        $customer_ident_no = '220282199103072937';
-        $customer_ident_type = '0';
-        $customer_name = '王志闯';
-        $mobile = '18129986450';
-        $ident_front_path = 'http://www.ydjituan.com/images/yd1.jpg';
-        $personalParams = compact('customer_id',
-            'notify_url', 'verified_way', 'page_modify',
-            'cert_flag', 'customer_ident_no', 'customer_ident_type', 'customer_name',
-            'mobile', 'ident_front_path');
+        $personalParams = compact('customer_id', 'notify_url', 'verified_way', 'page_modify', 'cert_flag', 'customer_ident_no', 'customer_ident_type', 'customer_name', 'mobile', 'ident_front_path');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
         return $this->curl->sendRequest($this->baseUrl . "get_person_verify_url" . '.api', 'post', $params);
