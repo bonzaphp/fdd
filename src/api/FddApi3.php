@@ -8,6 +8,7 @@
 
 namespace bonza\fdd\api;
 
+use bonza\fdd\exception\FileNotExitsException;
 use bonza\fdd\exception\InvalidArgumentException;
 use bonza\fdd\extend\Curl;
 use bonza\fdd\interfaces\FddInterface;
@@ -253,9 +254,9 @@ class FddApi3 implements FddInterface
 //            'customer_id' => $customer_id,//企业负责人客户编号
 //        ]);
         //verifiedType=1 公安部二要素
-        $public_security_essential_factor = json_encode([
+/*        $public_security_essential_factor = json_encode([
             'applyNum' => $applyNum,//申请编号
-        ]);
+        ]);*/
         $personalParams = compact('company_name', 'company_principal_type', 'company_principal_verifie_msg', 'credit_cod', 'company_customer_id', 'document_type', 'company_preservation_data_provider', 'company_preservation_name', 'transaction_id', 'verified_mod');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
@@ -298,11 +299,12 @@ class FddApi3 implements FddInterface
      * 印章上传
      * 新增用户签章图片
      * @param string $customer_id 客户编号
-     * @param string $signature_img_base64 签章图片 base64
+     * @param string $file_path 文件路径
      * @return array
      */
-    public function addSignature($customer_id, $signature_img_base64): array
+    public function addSignature($customer_id, $file_path): array
     {
+        $signature_img_base64 = $this->getImageToBase64($file_path);
         $personalParams = compact('customer_id', 'signature_img_base64');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
@@ -488,18 +490,18 @@ class FddApi3 implements FddInterface
      * @param string $sign_keyword
      * @return string
      */
-    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url = '',$sign_keyword = ''): string
+    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url = '', $sign_keyword = ''): string
     {
 
         $msg_digest = $this->getMsgDigest(compact('customer_id'));
         $params = $this->getCommonParams($msg_digest) + [
                 //业务参数
-                "transaction_id"  => $transaction_id,
-                "contract_id"     => $contract_id,
-                "customer_id"     => $customer_id,
-                "doc_title"       => $doc_title,
-                "return_url"      => $return_url,
-                "sign_keyword" => $sign_keyword,
+                "transaction_id" => $transaction_id,
+                "contract_id"    => $contract_id,
+                "customer_id"    => $customer_id,
+                "doc_title"      => $doc_title,
+                "return_url"     => $return_url,
+                "sign_keyword"   => $sign_keyword,
             ];
         return $this->baseUrl . "extsign" . '.api' . '?' . http_build_query($params);
     }
@@ -526,14 +528,14 @@ class FddApi3 implements FddInterface
      * @param string $contract_id 合同账号
      * @return string
      */
-    public function downLoadContract(string $contract_id):string
+    public function downLoadContract(string $contract_id): string
     {
         $msg_digest = $this->getMsgDigest(compact('contract_id'));
         $params = $this->getCommonParams($msg_digest) + [
                 //业务参数
                 "contract_id" => $contract_id,//合同编号
             ];
-        return $this->baseUrl . "downLoadContract" . '.api'.'?'.http_build_query($params);
+        return $this->baseUrl . "downLoadContract" . '.api' . '?' . http_build_query($params);
     }
 
 
@@ -686,6 +688,20 @@ class FddApi3 implements FddInterface
             "v"          => $this->version,
             "msg_digest" => $msg_digest,
         ];
+    }
+
+    /**
+     * 图片转base64编码
+     * @param string $file_path
+     * @return string
+     * @author bonzaphp@gmail.com
+     */
+    private function getImageToBase64(string $file_path): string
+    {
+        if (is_file($file_path)){
+            return base64_encode(file_get_contents($file_path));
+        }
+        throw new FileNotExitsException('文件不存在');
     }
 
 
