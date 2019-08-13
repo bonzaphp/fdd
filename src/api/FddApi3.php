@@ -14,6 +14,7 @@ use bonza\fdd\extend\Curl;
 use bonza\fdd\interfaces\FddInterface;
 use CURLFile;
 use Exception;
+use RuntimeException;
 
 /**
  * 法大大API version2
@@ -115,10 +116,10 @@ class FddApi3 implements FddInterface
      * @param int $customer_ident_type 证件类型，0，身份证
      * @param string $customer_ident_no 证件号码
      * @param string $customer_name 姓名
-     * @param string $ident_front_path 手机号
+     * @param string $ident_front_path 身份证证明照地址
      * @return array
      */
-    public function getPersonVerifyUrl($customer_id, $notify_url, $mobile = '',$customer_name = '',$customer_ident_no='',$ident_front_path = '',$verified_way = '1', $page_modify = '1', $cert_flag = '1', $customer_ident_type = 0): array
+    public function getPersonVerifyUrl($customer_id, $notify_url, $mobile = '', $customer_name = '', $customer_ident_no = '', $ident_front_path = '', $verified_way = '1', $page_modify = '1', $cert_flag = '1', $customer_ident_type = 0): array
     {
         $personalParams = compact('customer_id', 'notify_url', 'verified_way', 'page_modify', 'cert_flag', 'customer_ident_no', 'customer_ident_type', 'customer_name', 'mobile', 'ident_front_path');
         $msg_digest = $this->getMsgDigest($personalParams);
@@ -213,18 +214,19 @@ class FddApi3 implements FddInterface
     /**
      *
      * 对企业信息实名存证
+     * @param string $transaction_id 交易号
      * @param string $company_customer_id 企业客户编号
      * @param string $company_preservation_name 企业存证名称
      * @param string $company_preservation_data_provider 存证提供者
      * @param string $company_name 企业名称
-     * @param string $document_type 证件类型 1:三证合一 2：旧版营业执照
-     * @param string $credit_code 统 一社 会信用代码
-     * @param string $credit_code_file 统 一社 会信 用代 码电子版
-     * @param string $verified_mode 实 名认 证方式1:授权委托书 2:银行对公打款
-     * @param string $power_attorney_file 授 权委 托书电子版
-     * @param string $company_principal_type 企 业负 责人身份 :1.法人， 2 代理人
+     * @param string $credit_code 统一社会信用代码
+     * @param string $credit_code_file 统一社会信用代码电子版
      * @param string $company_principal_verifie_msg json 企 业负 责人 实名 存证 信息
-     * @param string $transaction_id 交易号
+     * @param $applyNum
+     * @param string $power_attorney_file 授 权委 托书电子版
+     * @param int $document_type 证件类型 1:三证合一 2：旧版营业执照
+     * @param int $verified_mode 实名认证方式1:授权委托书 2:银行对公打款
+     * @param int $company_principal_type 企 业负 责人身份 :1.法人， 2 代理人
      * @return array
      */
     public function companyDeposit($transaction_id, $company_customer_id, $company_preservation_name, $company_preservation_data_provider, $company_name, $credit_code, $credit_code_file, $company_principal_verifie_msg, $applyNum, $power_attorney_file, $document_type = 1, $verified_mode = 1, $company_principal_type = 1): array
@@ -240,9 +242,11 @@ class FddApi3 implements FddInterface
 //            'customer_id' => $customer_id,//企业负责人客户编号
 //        ]);
         //verifiedType=1 公安部二要素
-/*        $public_security_essential_factor = json_encode([
-            'applyNum' => $applyNum,//申请编号
-        ]);*/
+        /*        $public_security_essential_factor = json_encode([
+                    'applyNum' => $applyNum,//申请编号
+                ]);*/
+        $credit_cod = '';
+        $verified_mod = '1';
         $personalParams = compact('company_name', 'company_principal_type', 'company_principal_verifie_msg', 'credit_cod', 'company_customer_id', 'document_type', 'company_preservation_data_provider', 'company_preservation_name', 'transaction_id', 'verified_mod');
         $msg_digest = $this->getMsgDigest($personalParams);
         $params = $this->getCommonParams($msg_digest) + $personalParams;
@@ -471,15 +475,26 @@ class FddApi3 implements FddInterface
      * @param string $transaction_id 交易号
      * @param string $contract_id 合同编号
      * @param string $customer_id 客户编号
-     * @param string $doc_title 客户角色  1-接入平台；2-仅适用互金行业担保公司或担保人；3-接入平台客户（互金行业指投资人）；4-仅适用互金行业借款企业或者借款人如果需要开通自动签权限请联系法
+     * @param string $doc_title 文档标题
      * @param string $return_url 页面跳转URL（签署结果同步通知）
      * @param string $sign_keyword
      * @return string
      */
     public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url = '', $sign_keyword = ''): string
     {
-
-        $msg_digest = $this->getMsgDigest(compact('customer_id'));
+        $msg_digest = base64_encode(
+            strtoupper(
+                sha1(
+                    $this->appId
+                    . strtoupper(md5($transaction_id . $this->timestamp))
+                    . strtoupper(
+                        sha1(
+                            $this->appSecret . $customer_id
+                        )
+                    )
+                )
+            )
+        );
         $params = $this->getCommonParams($msg_digest) + [
                 //业务参数
                 "transaction_id" => $transaction_id,
@@ -596,9 +611,9 @@ class FddApi3 implements FddInterface
      * ascll码排序
      * @param array $arr
      * @param int $sorting_type 排序参数
-     * @return array
+     * @return string
      */
-    private function ascllSort($arr, $sorting_type = 0)
+    private function ascllSort($arr, $sorting_type = 0): string
     {
         ksort($arr, $sorting_type);
         return implode('', $arr);
@@ -611,17 +626,17 @@ class FddApi3 implements FddInterface
      * @param string $key
      * @return array
      */
-    private function encrypt($data, $key)
+    private function encrypt($data, $key): array
     {
         try {
-            if (!in_array('des-ede3', openssl_get_cipher_methods())) {
-                throw new Exception('未知加密方法');
+            if (!in_array('des-ede3', openssl_get_cipher_methods(), true)) {
+                throw new RuntimeException('未知加密方法');
             }
             $ivLen = openssl_cipher_iv_length('des-ede3');
             $iv = openssl_random_pseudo_bytes($ivLen);
             $result = bin2hex(openssl_encrypt($data, 'des-ede3', $key, OPENSSL_RAW_DATA, $iv));
             if (!$result) {
-                throw new Exception('加密失败');
+                throw new RuntimeException('加密失败');
             }
             return [TRUE, $result];
         } catch (Exception $e) {
@@ -684,7 +699,7 @@ class FddApi3 implements FddInterface
      */
     private function getImageToBase64(string $file_path): string
     {
-        if (is_file($file_path)){
+        if (is_file($file_path)) {
             return base64_encode(file_get_contents($file_path));
         }
         throw new FileNotExitsException('文件不存在');
