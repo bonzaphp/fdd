@@ -447,23 +447,37 @@ class FddApi3 implements FddInterface
      * @param string $contract_id 合同编号
      * @param string $customer_id 客户编号
      * @param string $client_role 客户角色  1-接入平台；2-仅适用互金行业担保公司或担保人；3-接入平台客户（互金行业指投资人）；4-仅适用互金行业借款企业或者借款人如果需要开通自动签权限请联系法
-     * @param string $pagenum 页码 签章页码，从 0 开始。即在第一页签章，传值 0。
-     * @param string $x 盖章点 x 坐标
-     * @param string $y 盖章点 y 坐标
+     * @param string $doc_title 文档标题
+     * @param string $position_type 定位类型
+     * @param string $sign_keyword 定位关键字
+     * @param string $keyword_strategy
      * @return array
      */
-    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role, $pagenum, $x, $y): array
+    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role = '1', $doc_title = '', $position_type = '0', $sign_keyword = '', $keyword_strategy = '0'): array
     {
-        $msg_digest = $this->getMsgDigest(compact('customer_id'));
+        $msg_digest = base64_encode(
+            strtoupper(
+                sha1(
+                    $this->appId
+                    . strtoupper(md5($transaction_id . $this->timestamp))
+                    . strtoupper(
+                        sha1(
+                            $this->appSecret . $customer_id
+                        )
+                    )
+                )
+            )
+        );
         $personalParams = [
             //业务参数
-            "transaction_id" => $transaction_id,
-            "contract_id"    => $contract_id,
-            "customer_id"    => $customer_id,
-            "client_role"    => $client_role,
-            "pagenum"        => $pagenum,
-            "x"              => $x,
-            "y"              => $y,
+            "transaction_id"   => $transaction_id,
+            "contract_id"      => $contract_id,
+            "customer_id"      => $customer_id,
+            "client_role"      => $client_role,
+            "position_type"    => $position_type,
+            "sign_keyword"     => $sign_keyword,
+            "doc_title"        => $doc_title,
+            "keyword_strategy" => $keyword_strategy,
         ];
         $params = $this->getCommonParams($msg_digest) + $personalParams;
         return $this->curl->sendRequest($this->baseUrl . "extsign_auto" . '.api', 'post', $params);
