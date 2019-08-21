@@ -17,8 +17,8 @@ use Exception;
 use RuntimeException;
 
 /**
- * 法大大API version2
- * Class FddApi2
+ * 法大大API version3
+ * Class FddApi3
  * @author bonzaphp@gmail.com
  * @Date 2019-06-27
  * @package bonza\fdd
@@ -450,10 +450,11 @@ class FddApi3 implements FddInterface
      * @param string $doc_title 文档标题
      * @param string $position_type 定位类型
      * @param string $sign_keyword 定位关键字
-     * @param string $keyword_strategy
+     * @param string $keyword_strategy 签章策略
+     * @param string $notify_url 异步通知URL
      * @return array
      */
-    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role = '1', $doc_title = '', $position_type = '0', $sign_keyword = '', $keyword_strategy = '0'): array
+    public function extSignAuto($transaction_id, $contract_id, $customer_id, $client_role = '1', $doc_title = '', $position_type = '0', $sign_keyword = '', $keyword_strategy = '0',$notify_url = ''): array
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -478,6 +479,7 @@ class FddApi3 implements FddInterface
             'sign_keyword'     => $sign_keyword,
             'doc_title'        => $doc_title,
             'keyword_strategy' => $keyword_strategy,
+            'notify_url'       => $notify_url
         ];
         $params = array_merge($this->getCommonParams($msg_digest) , $personalParams);
         return $this->curl->sendRequest($this->baseUrl . 'extsign_auto' . '.api', 'post', $params);
@@ -491,10 +493,11 @@ class FddApi3 implements FddInterface
      * @param string $customer_id 客户编号
      * @param string $doc_title 文档标题
      * @param string $return_url 页面跳转URL（签署结果同步通知）
+     * @param string $notify_url 页面跳转URL（签署结果异步通知）
      * @param string $sign_keyword
      * @return string
      */
-    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url = '', $sign_keyword = ''): string
+    public function extSign($transaction_id, $contract_id, $customer_id, $doc_title, $return_url = '', $sign_keyword = '',$notify_url=''): string
     {
         $msg_digest = base64_encode(
             strtoupper(
@@ -516,6 +519,7 @@ class FddApi3 implements FddInterface
                 'customer_id'    => $customer_id,
                 'doc_title'      => $doc_title,
                 'return_url'     => $return_url,
+                'notify_url'     => $notify_url,
                 'sign_keyword'   => $sign_keyword,
             ];
         return $this->baseUrl . 'extsign' . '.api' . '?' . http_build_query($params);
