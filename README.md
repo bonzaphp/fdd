@@ -1,6 +1,12 @@
 
 ## 法大大接口3.0
 
+## 安装
+
+```php
+composer require bonza/fdd
+```
+
 ### 1. 使用示例
 
 ```php
@@ -17,6 +23,7 @@ $fdd = new Fdd($options);
 
 //$res = $fdd->accountRegister('456');
 
+==暂时没有测试覆盖==
 
 ```
 
