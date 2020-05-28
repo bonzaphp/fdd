@@ -17,7 +17,7 @@ class FddApi3Test extends TestCase
     public function testAccountRegister(...$str)
     {
         $options =[
-            'appId' => '402163',
+            'appId' => '402***',
             'appSecret'=>'IXWMOF0WghaoHRqdqD9ZYcxI',
             'baseUrl' => 'https://testapi.fadada.com:8443/api/',
             'version'=>'3.0'
